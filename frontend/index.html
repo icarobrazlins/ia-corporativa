@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assistente de IA Corporativa</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      background-color: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      width: 100%;
+      max-width: 600px;
+      height: 85vh;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    /* Estilos do Login */
+    .login-box {
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      justify-content: center;
+      height: 100%;
+    }
+    .login-box h2 {
+      margin: 0 0 10px 0;
+      color: #007bff;
+      text-align: center;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-group label {
+      font-weight: bold;
+      font-size: 0.9em;
+      color: #495057;
+    }
+    .form-group input {
+      padding: 10px;
+      border: 1px solid #ced4da;
+      border-radius: 6px;
+      outline: none;
+    }
+    .login-btn {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .error-msg {
+      color: #dc3545;
+      font-size: 0.85em;
+      text-align: center;
+    }
+
+    /* Estilos do Chat */
+    .chat-box {
+      display: none;
+      flex-direction: column;
+      height: 100%;
+    }
+    .chat-header {
+      background-color: #007bff;
+      color: white;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: bold;
+    }
+    .user-badge {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.85em;
+    }
+    .logout-btn {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .chat-messages {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .message {
+      max-width: 80%;
+      padding: 10px 14px;
+      border-radius: 8px;
+      line-height: 1.4;
+      white-space: pre-wrap;
+    }
+    .bot-message {
+      background-color: #e9ecef;
+      color: #212529;
+      align-self: flex-start;
+    }
+    .user-message {
+      background-color: #007bff;
+      color: white;
+      align-self: flex-end;
+    }
+    .chat-input-area {
+      padding: 12px;
+      border-top: 1px solid #dee2e6;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .chat-input-area input[type="text"] {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ced4da;
+      border-radius: 6px;
+      outline: none;
+    }
+    .chat-input-area button {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .send-btn {
+      background-color: #007bff;
+      color: white;
+    }
+    .mic-btn {
+      background-color: #6c757d;
+      color: white;
+      font-size: 1.1em;
+    }
+    .mic-btn.recording {
+      background-color: #dc3545;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.6; }
+      100% { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Tela de Login Integrada -->
+    <div id="loginSection" class="login-box">
+      <h2>Assistente de IA Corporativa</h2>
+      <div class="form-group">
+        <label for="username">Usuário</label>
+        <input type="text" id="username" placeholder="Digite seu usuário (ex: Seculos)">
+      </div>
+      <div class="form-group">
+        <label for="password">Senha</label>
+        <input type="password" id="password" placeholder="Digite sua senha">
+      </div>
+      <button class="login-btn" onclick="realizarLogin()">Entrar</button>
+      <div id="loginError" class="error-msg"></div>
+    </div>
+
+    <!-- Tela do Chat -->
+    <div id="chatSection" class="chat-box">
+      <div class="chat-header">
+        <div>
+          Assistente de IA 
+          <span id="userBadge" class="user-badge"></span>
+        </div>
+        <button class="logout-btn" onclick="logout()">Sair</button>
+      </div>
+
+      <div class="chat-messages" id="chatMessages">
+        <div class="message bot-message">Sessão autenticada com sucesso! Como posso ajudar?</div>
+      </div>
+
+      <div class="chat-input-area">
+        <input type="text" id="userInput" placeholder="Escreva ou clique no microfone para falar..." onkeypress="handleKeyPress(event)">
+        <button class="mic-btn" id="micBtn" onclick="toggleSpeechRecognition()" title="Falar">🎤</button>
+        <button class="send-btn" onclick="sendMessage()">Enviar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "http://192.168.0.12:8000";
+
+    // Verificar se já está logado
+    window.onload = () => {
+      const token = localStorage.getItem("access_token");
+      if (token) {
+        mostrarChat();
+      }
+    };
+
+    async function realizarLogin() {
+      const userField = document.getElementById("username").value.trim();
+      const passField = document.getElementById("password").value.trim();
+      const errorDiv = document.getElementById("loginError");
+      errorDiv.innerText = "";
+
+      if (!userField || !passField) {
+        errorDiv.innerText = "Preencha usuário e senha.";
+        return;
+      }
+
+      const formData = new URLSearchParams();
+      formData.append("username", userField);
+      formData.append("password", passField);
+
+      try {
+        const response = await fetch(`${API_URL}/token`, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: formData
+        });
+
+        if (!response.ok) {
+          errorDiv.innerText = "Usuário ou senha incorretos.";
+          return;
+        }
+
+        const data = await response.json();
+        localStorage.setItem("access_token", data.access_token);
+        localStorage.setItem("nome_usuario", data.nome);
+        localStorage.setItem("role_usuario", data.role);
+
+        mostrarChat();
+      } catch (err) {
+        errorDiv.innerText = "Erro ao conectar com o servidor backend.";
+      }
+    }
+
+    function mostrarChat() {
+      const nomeUsuario = localStorage.getItem("nome_usuario") || "Usuário";
+      const roleUsuario = localStorage.getItem("role_usuario") || "user";
+
+      document.getElementById("loginSection").style.display = "none";
+      document.getElementById("chatSection").style.display = "flex";
+      document.getElementById("userBadge").innerText = `${nomeUsuario} [${roleUsuario.toUpperCase()}]`;
+    }
+
+    // Reconhecimento de Voz (STT - Speech to Text)
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition = null;
+    let isRecording = false;
+
+    if (SpeechRecognition) {
+      recognition = new SpeechRecognition();
+      recognition.lang = 'pt-BR';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        isRecording = true;
+        const micBtn = document.getElementById("micBtn");
+        micBtn.classList.add("recording");
+        micBtn.innerText = "🛑";
+      };
+
+      recognition.onend = () => {
+        isRecording = false;
+        const micBtn = document.getElementById("micBtn");
+        micBtn.classList.remove("recording");
+        micBtn.innerText = "🎤";
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        document.getElementById("userInput").value = transcript;
+        sendMessage();
+      };
+
+      recognition.onerror = (event) => {
+        console.error("Erro no microfone:", event.error);
+        alert("Não foi possível capturar a voz. Verifique a permissão do microfone.");
+      };
+    } else {
+      document.getElementById("micBtn").style.display = "none";
+    }
+
+    function toggleSpeechRecognition() {
+      if (!recognition) return;
+      if (isRecording) {
+        recognition.stop();
+      } else {
+        window.speechSynthesis.cancel();
+        recognition.start();
+      }
+    }
+
+    // Síntese de Voz (TTS - Text to Speech)
+    function speakText(text) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const cleanText = text.replace(/[*#_`]/g, '');
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.lang = 'pt-BR';
+        utterance.rate = 1.0;
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+
+    async function sendMessage() {
+      const inputElement = document.getElementById("userInput");
+      const message = inputElement.value.trim();
+      const token = localStorage.getItem("access_token");
+
+      if (!message) return;
+
+      appendMessage(message, "user-message");
+      inputElement.value = "";
+
+      try {
+        const response = await fetch(`${API_URL}/chat`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ pergunta: message })
+        });
+
+        if (response.status === 401) {
+          logout();
+          return;
+        }
+
+        const data = await response.json();
+        const botReply = data.resposta;
+
+        appendMessage(botReply, "bot-message");
+        speakText(botReply);
+
+      } catch (error) {
+        const errorMsg = "Erro de conexão com o servidor.";
+        appendMessage(errorMsg, "bot-message");
+        speakText(errorMsg);
+      }
+    }
+
+    function appendMessage(text, className) {
+      const chatMessages = document.getElementById("chatMessages");
+      const messageDiv = document.createElement("div");
+      messageDiv.className = `message ${className}`;
+      messageDiv.innerText = text;
+      chatMessages.appendChild(messageDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function handleKeyPress(event) {
+      if (event.key === "Enter") {
+        sendMessage();
+      }
+    }
+
+    function logout() {
+      window.speechSynthesis.cancel();
+      localStorage.clear();
+      document.getElementById("chatSection").style.display = "none";
+      document.getElementById("loginSection").style.display = "flex";
+      document.getElementById("username").value = "";
+      document.getElementById("password").value = "";
+    }
+  </script>
+</body>
+</html>
