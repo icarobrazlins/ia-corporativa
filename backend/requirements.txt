@@ -1,4 +1,7 @@
-google-genai
 fastapi
 uvicorn
+google-genai
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
 python-dotenv
